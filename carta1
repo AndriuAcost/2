@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Carta de Hogwarts</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'EB Garamond',serif;background:#0a0f0a;min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;overflow:hidden;position:relative;color:#e8e0cc;}
+#particulas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;}
+#fireworks-canvas{position:fixed;inset:0;z-index:90;pointer-events:none;display:none;}
+#fireworks-canvas.activo{display:block;}
+#flash-magico{position:fixed;inset:0;z-index:300;background:radial-gradient(ellipse at center,rgba(80,255,120,0.35) 0%,transparent 70%);pointer-events:none;opacity:0;transition:opacity 0.15s;}
+#flash-magico.activo{opacity:1;}
+
+/* ===================== INTRO ===================== */
+#pantalla-hogwarts{position:fixed;inset:0;z-index:200;background:radial-gradient(ellipse at center,#0d1a0d 0%,#060c06 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;overflow-y:auto;}
+#pantalla-hogwarts.saliendo{animation:salirHogwarts 0.8s ease forwards;}
+@keyframes salirHogwarts{to{opacity:0;transform:scale(1.04);pointer-events:none;}}
+.sello-hp{width:110px;height:130px;display:flex;align-items:center;justify-content:center;margin-bottom:8px;}
+.hogwarts-titulo{font-family:'Cinzel',serif;font-size:13px;letter-spacing:0.35em;text-transform:uppercase;color:#4a9e5c;margin-bottom:6px;text-align:center;}
+.hogwarts-subtitulo{font-family:'Cinzel',serif;font-size:22px;letter-spacing:0.12em;color:#c8d8a8;margin-bottom:4px;text-align:center;}
+.hogwarts-sub2{font-family:'EB Garamond',serif;font-style:italic;font-size:14px;color:rgba(180,200,160,0.5);letter-spacing:0.15em;margin-bottom:32px;text-align:center;}
+.separador-hp{display:flex;align-items:center;gap:12px;margin-bottom:28px;color:#2a6e3a;font-size:18px;}
+.sep-linea{width:80px;height:1px;background:linear-gradient(90deg,transparent,#2a6e3a);}
+.sep-linea.r{background:linear-gradient(90deg,#2a6e3a,transparent);}
+.carta-hp-destinatario{font-family:'EB Garamond',serif;font-size:15px;line-height:2;color:#b8c8a0;text-align:center;margin-bottom:28px;font-style:italic;}
+.carta-hp-destinatario strong{font-style:normal;color:#c8e0a8;font-size:17px;}
+.alohomora-wrap{display:flex;flex-direction:column;align-items:center;gap:10px;width:100%;max-width:320px;}
+.alohomora-label{font-family:'Cinzel',serif;font-size:11px;letter-spacing:0.25em;text-transform:uppercase;color:#4a9e5c;}
+.alohomora-input{width:100%;background:rgba(20,40,20,0.6);border:1px solid rgba(74,158,92,0.3);border-radius:3px;padding:12px 20px;font-family:'Cinzel',serif;font-size:16px;letter-spacing:0.2em;color:#c8e0a8;text-align:center;outline:none;transition:all 0.3s;}
+.alohomora-input:focus{border-color:#4a9e5c;box-shadow:0 0 16px rgba(74,158,92,0.2);}
+.alohomora-input.error{border-color:#9e2a2a;animation:shake 0.4s ease;color:#e08080;}
+.alohomora-input.correcto{border-color:#4a9e5c;box-shadow:0 0 24px rgba(74,158,92,0.5);color:#a0f0b0;}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.alohomora-error{font-size:12px;color:#c06060;letter-spacing:0.08em;display:none;font-style:italic;}
+.alohomora-error.visible{display:block;}
+
+
+/* Botón confirmar hechizo mobile */
+.alohomora-btn{
+  width:100%;
+  background:rgba(74,158,92,0.15);
+  border:1px solid rgba(74,158,92,0.4);
+  color:#a0c880;
+  font-family:'Cinzel',serif;
+  font-size:13px;
+  letter-spacing:0.2em;
+  padding:12px 20px;
+  border-radius:2px;
+  cursor:pointer;
+  transition:all 0.3s;
+  text-transform:uppercase;
+  margin-top:2px;
+}
+.alohomora-btn:hover{background:rgba(74,158,92,0.28);border-color:#4a9e5c;color:#c8e8a0;}
+.alohomora-btn:active{background:rgba(74,158,92,0.35);transform:scale(0.98);}
+
+/* Pista letra por letra */
+.pista-wrap{margin-top:6px;text-align:center;min-height:20px;}
+.pista-label{font-size:11px;color:rgba(140,180,100,0.3);letter-spacing:0.08em;font-style:italic;margin-bottom:4px;}
+.pista-letras{font-family:'Cinzel',serif;font-size:15px;letter-spacing:0.35em;color:rgba(74,158,92,0.55);min-height:22px;}
+
+/* ===================== SOBRE ===================== */
+#escena{position:relative;z-index:10;display:none;flex-direction:column;align-items:center;gap:28px;}
+#escena.visible{display:flex;}
+.sobre-titulo{font-family:'Cinzel',serif;font-size:11px;letter-spacing:0.3em;text-transform:uppercase;color:rgba(74,158,92,0.6);}
+.sobre-wrap{position:relative;width:320px;height:220px;cursor:pointer;perspective:800px;}
+.sobre{width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform 0.6s cubic-bezier(.4,0,.2,1);}
+.sobre-wrap:hover .sobre{transform:translateY(-6px);}
+.sobre-cuerpo{position:absolute;inset:0;background:linear-gradient(160deg,#1a2a1a 0%,#243424 100%);border-radius:4px 4px 8px 8px;box-shadow:0 20px 60px rgba(0,0,0,0.7),inset 0 1px 0 rgba(100,180,80,0.15);overflow:hidden;border:1px solid rgba(74,158,92,0.25);}
+.sobre-left{position:absolute;bottom:0;left:0;border-style:solid;border-width:110px 0 0 160px;border-color:transparent transparent transparent #162416;}
+.sobre-right{position:absolute;bottom:0;right:0;border-style:solid;border-width:110px 160px 0 0;border-color:transparent #1e301e transparent transparent;}
+.sobre-bottom{position:absolute;bottom:0;left:0;right:0;border-style:solid;border-width:0 160px 90px 160px;border-color:transparent transparent #1a281a transparent;}
+.sello{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);width:50px;height:50px;background:radial-gradient(circle,#1e3a1e,#0d1a0d);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:0 0 20px rgba(74,158,92,0.4);z-index:5;border:1.5px solid rgba(74,158,92,0.4);}
+.sobre-tapa{position:absolute;top:0;left:0;right:0;height:120px;transform-origin:top center;transform-style:preserve-3d;transition:transform 0.8s cubic-bezier(.4,0,.2,1);z-index:10;}
+.sobre-tapa-inner{width:100%;height:100%;clip-path:polygon(0 0,100% 0,50% 100%);background:linear-gradient(180deg,#1e301e 0%,#162416 100%);}
+.sobre-tapa-back{position:absolute;inset:0;clip-path:polygon(0 0,100% 0,50% 100%);background:linear-gradient(180deg,#1a281a 0%,#122012 100%);transform:rotateX(180deg);backface-visibility:hidden;}
+.sobre-wrap.abierta .sobre-tapa{transform:rotateX(-180deg);}
+.carta-saliendo{position:absolute;left:50%;transform:translateX(-50%);bottom:20px;width:260px;transition:bottom 0.9s cubic-bezier(.4,0,.2,1) 0.4s,opacity 0.5s ease 0.4s;opacity:0;z-index:9;}
+.sobre-wrap.abierta .carta-saliendo{bottom:140px;opacity:1;}
+.carta-preview{background:linear-gradient(160deg,#1a2a18,#223022);border-radius:3px;height:80px;border:1px solid rgba(74,158,92,0.2);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 32px rgba(0,0,0,0.5);}
+.carta-preview-lineas{display:flex;flex-direction:column;gap:6px;padding:16px 20px;width:100%;}
+.linea-preview{height:2px;background:rgba(74,158,92,0.25);border-radius:2px;}
+.linea-preview:nth-child(1){width:80%;}
+.linea-preview:nth-child(2){width:100%;}
+.linea-preview:nth-child(3){width:65%;}
+#btn-abrir{background:none;border:1.5px solid rgba(74,158,92,0.4);color:#a0c880;font-family:'Cinzel',serif;font-size:13px;letter-spacing:0.2em;padding:12px 36px;border-radius:2px;cursor:pointer;transition:all 0.3s;text-transform:uppercase;}
+#btn-abrir:hover{border-color:#4a9e5c;color:#c8e8a0;box-shadow:0 0 20px rgba(74,158,92,0.2);}
+
+/* ===================== CARTA ===================== */
+#carta-completa{display:none;position:fixed;inset:0;z-index:100;background:radial-gradient(ellipse at 50% 0%,#0d1a0d 0%,#060c06 60%,#030703 100%);flex-direction:column;align-items:center;justify-content:flex-start;overflow-y:auto;padding:40px 16px 60px;animation:entrarCarta 0.6s ease;}
+#carta-completa.visible{display:flex;}
+@keyframes entrarCarta{from{opacity:0;transform:scale(0.97)}to{opacity:1;transform:scale(1)}}
+
+/* Nieve dentro de la carta */
+#nieve-canvas{position:fixed;inset:0;z-index:101;pointer-events:none;display:none;}
+#nieve-canvas.activo{display:block;}
+
+.papel{width:100%;max-width:580px;background:linear-gradient(160deg,#141e12 0%,#0f180e 100%);border-radius:3px;box-shadow:0 30px 80px rgba(0,0,0,0.8),inset 0 1px 0 rgba(100,180,80,0.1);overflow:hidden;position:relative;border:1px solid rgba(74,158,92,0.15);z-index:102;}
+.papel::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(transparent,transparent 31px,rgba(74,158,92,0.06) 31px,rgba(74,158,92,0.06) 32px);pointer-events:none;opacity:1;top:80px;}
+.papel-header{background:linear-gradient(135deg,#0d2010,#162818);padding:28px 44px 24px;position:relative;overflow:hidden;border-bottom:1px solid rgba(74,158,92,0.2);}
+.papel-header::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(45deg,transparent,transparent 10px,rgba(74,158,92,0.02) 10px,rgba(74,158,92,0.02) 20px);}
+.header-top{display:flex;align-items:center;gap:16px;margin-bottom:12px;}
+.header-serpiente{font-size:28px;filter:drop-shadow(0 0 8px rgba(74,158,92,0.5));}
+.papel-titulo{font-family:'Cinzel',serif;font-size:22px;color:#a0c880;position:relative;z-index:1;letter-spacing:0.05em;}
+.papel-destinatario{font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:rgba(140,180,100,0.5);position:relative;z-index:1;font-family:'Cinzel',serif;}
+.casa-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(74,158,92,0.1);border:1px solid rgba(74,158,92,0.25);border-radius:2px;padding:4px 12px;margin-top:10px;font-family:'Cinzel',serif;font-size:10px;letter-spacing:0.2em;color:#4a9e5c;text-transform:uppercase;}
+.sesiones-puntos{display:flex;gap:10px;justify-content:center;padding:20px 44px 0;}
+.punto{width:10px;height:10px;border-radius:50%;background:rgba(74,158,92,0.2);cursor:pointer;transition:all 0.3s;border:1.5px solid rgba(74,158,92,0.2);}
+.punto.activo{background:#4a9e5c;border-color:#6abf78;transform:scale(1.2);box-shadow:0 0 8px rgba(74,158,92,0.4);}
+.punto:hover{background:rgba(74,158,92,0.4);}
+.sesiones-inner{padding:28px 44px 36px;min-height:280px;position:relative;z-index:1;}
+.sesion{display:none;animation:fadeSlide 0.4s ease;}
+.sesion.activa{display:block;}
+@keyframes fadeSlide{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.sesion-num{font-family:'Cinzel',serif;font-size:10px;letter-spacing:0.3em;text-transform:uppercase;color:#4a9e5c;margin-bottom:8px;}
+.sesion-tit{font-family:'Cinzel',serif;font-size:20px;color:#a0c880;margin-bottom:20px;border-bottom:1px solid rgba(74,158,92,0.2);padding-bottom:12px;letter-spacing:0.05em;}
+.sesion-texto{font-size:16px;line-height:2;color:#b0c8a0;white-space:pre-wrap;}
+
+/* Tinta invisible */
+.tinta-wrap{margin-top:24px;position:relative;}
+.tinta-hint{font-family:'Cinzel',serif;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:rgba(74,158,92,0.25);margin-bottom:8px;text-align:center;animation:pulse 2.5s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:0.25}50%{opacity:0.55}}
+.tinta-texto{
+  font-family:'EB Garamond',serif;font-style:italic;font-size:15px;line-height:1.9;
+  color:transparent;
+  background:rgba(74,158,92,0.04);
+  border:1px solid rgba(74,158,92,0.08);
+  border-radius:3px;padding:14px 18px;
+  text-align:center;
+  cursor:pointer;
+  user-select:none;
+  transition:color 0.8s ease, background 0.8s ease, border-color 0.5s;
+  -webkit-text-fill-color: transparent;
+}
+.tinta-texto.revelado{
+  color:#8bc870 !important;
+  -webkit-text-fill-color:#8bc870 !important;
+  background:rgba(74,158,92,0.08);
+  border-color:rgba(74,158,92,0.2);
+  text-shadow:0 0 12px rgba(74,158,92,0.3);
+}
+
+.firma-bloque{padding:20px 44px 28px;position:relative;z-index:1;border-top:1px solid rgba(74,158,92,0.15);display:flex;justify-content:flex-end;}
+.firma-sub{font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:rgba(140,180,100,0.4);margin-bottom:4px;text-align:right;font-family:'Cinzel',serif;}
+.firma-texto{font-family:'EB Garamond',serif;font-style:italic;font-size:22px;color:#6abf78;text-align:right;text-shadow:0 0 16px rgba(74,158,92,0.4);}
+.cursor-firma{display:inline-block;width:2px;height:20px;background:#4a9e5c;margin-left:2px;vertical-align:middle;animation:parpadeo 0.7s step-end infinite;}
+@keyframes parpadeo{0%,100%{opacity:1}50%{opacity:0}}
+
+/* Botón WhatsApp */
+.ws-seccion{padding:0 44px 32px;position:relative;z-index:1;display:none;flex-direction:column;align-items:center;gap:8px;border-top:1px solid rgba(74,158,92,0.1);padding-top:20px;}
+.ws-confirma{font-family:'Cinzel',serif;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:rgba(140,180,100,0.5);text-align:center;margin-bottom:4px;}
+#btn-responder{display:flex;align-items:center;gap:10px;background:rgba(74,158,92,0.12);border:1px solid rgba(74,158,92,0.35);color:#a0c880;font-family:'Cinzel',serif;font-size:13px;letter-spacing:0.15em;padding:13px 32px;border-radius:3px;cursor:pointer;transition:all 0.3s;text-transform:uppercase;width:100%;justify-content:center;}
+#btn-responder:hover{background:rgba(74,158,92,0.22);border-color:#4a9e5c;color:#c8e8a0;box-shadow:0 0 20px rgba(74,158,92,0.15);}
+
+.carta-nav{display:flex;align-items:center;justify-content:space-between;padding:16px 44px 20px;border-top:1px solid rgba(74,158,92,0.15);position:relative;z-index:1;}
+.btn-carta{background:none;border:1px solid rgba(74,158,92,0.3);color:#6a9e70;font-family:'Cinzel',serif;font-size:12px;letter-spacing:0.1em;padding:8px 20px;cursor:pointer;border-radius:2px;transition:all 0.2s;text-transform:uppercase;}
+.btn-carta:hover{background:rgba(74,158,92,0.15);border-color:#4a9e5c;color:#a0c880;}
+.btn-carta:disabled{opacity:0.2;pointer-events:none;}
+.prog-text{font-size:11px;color:rgba(140,180,100,0.4);font-family:'Cinzel',serif;letter-spacing:0.12em;}
+#btn-cerrar{margin-top:20px;background:none;border:1px solid rgba(74,158,92,0.2);color:rgba(140,180,100,0.35);font-family:'Cinzel',serif;font-size:11px;letter-spacing:0.2em;padding:10px 28px;cursor:pointer;border-radius:2px;transition:all 0.3s;text-transform:uppercase;z-index:103;position:relative;}
+#btn-cerrar:hover{border-color:rgba(74,158,92,0.5);color:#6abf78;}
+
+/* ===================== COUNTDOWN ===================== */
+#countdown-banner{display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:rgba(6,12,6,0.95);border:1px solid rgba(74,158,92,0.3);border-radius:3px;padding:14px 28px;z-index:9999;text-align:center;backdrop-filter:blur(8px);min-width:300px;}
+#countdown-banner.visible{display:block;animation:aparecer 0.4s ease;}
+@keyframes aparecer{from{opacity:0;transform:translateX(-50%) translateY(12px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+.countdown-label{font-family:'Cinzel',serif;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:rgba(140,180,100,0.5);margin-bottom:4px;}
+#countdown-num{font-family:'Cinzel',serif;font-size:36px;color:#4a9e5c;line-height:1;transition:color 0.3s;}
+.countdown-sub{font-size:11px;color:rgba(140,180,100,0.25);margin-top:4px;letter-spacing:0.06em;font-style:italic;}
+
+/* ===================== MODAL TROLL ===================== */
+#modal-troll{display:none;position:fixed;inset:0;z-index:9999;background:rgba(3,8,3,0.9);align-items:center;justify-content:center;backdrop-filter:blur(6px);}
+#modal-troll.visible{display:flex;}
+.modal-caja{background:linear-gradient(160deg,#0f1e0e,#0a1509);border:1px solid rgba(74,158,92,0.3);border-radius:4px;padding:40px 44px;max-width:380px;width:90%;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,0.8);animation:popIn 0.4s cubic-bezier(.34,1.56,.64,1);}
+@keyframes popIn{from{opacity:0;transform:scale(0.7)}to{opacity:1;transform:scale(1)}}
+.modal-emoji{font-size:44px;margin-bottom:16px;}
+.modal-titulo{font-family:'Cinzel',serif;font-size:18px;color:#a0c880;margin-bottom:10px;letter-spacing:0.08em;}
+.modal-texto{font-size:15px;color:#7a9870;line-height:1.8;margin-bottom:24px;font-style:italic;}
+.modal-btn{background:rgba(74,158,92,0.15);border:1px solid rgba(74,158,92,0.4);color:#a0c880;font-family:'Cinzel',serif;font-size:12px;letter-spacing:0.15em;padding:10px 32px;border-radius:2px;cursor:pointer;transition:all 0.2s;text-transform:uppercase;}
+.modal-btn:hover{background:rgba(74,158,92,0.25);border-color:#4a9e5c;}
+
+/* ===================== SACUDIR ===================== */
+#sacudir-hint{display:none;position:fixed;inset:0;z-index:9998;align-items:center;justify-content:center;background:rgba(3,8,3,0.7);backdrop-filter:blur(4px);}
+#sacudir-hint.visible{display:flex;}
+.sacudir-caja{display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center;padding:20px;}
+.sacudir-icono{font-size:52px;animation:sacudirIcon 1.2s ease-in-out infinite;}
+@keyframes sacudirIcon{0%,100%{transform:rotate(-12deg)}50%{transform:rotate(12deg)}}
+.sacudir-texto{font-family:'Cinzel',serif;font-size:13px;letter-spacing:0.2em;text-transform:uppercase;color:#a0c880;}
+.sacudir-sub{font-family:'EB Garamond',serif;font-style:italic;font-size:14px;color:rgba(160,200,128,0.5);}
+
+/* ===================== MASCOTAS ===================== */
+#pantalla-mascotas{display:none;position:fixed;inset:0;z-index:10000;background:#000;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;animation:fadeInMascotas 1.2s ease;}
+#pantalla-mascotas.visible{display:flex;}
+@keyframes fadeInMascotas{from{opacity:0}to{opacity:1}}
+.mascotas-estrellas{position:absolute;inset:0;background:radial-gradient(ellipse at 20% 50%,rgba(74,158,92,0.06) 0%,transparent 60%),radial-gradient(ellipse at 80% 30%,rgba(200,232,160,0.04) 0%,transparent 50%);pointer-events:none;}
+.mascotas-foto{width:200px;height:200px;border-radius:50%;object-fit:cover;border:3px solid rgba(74,158,92,0.4);box-shadow:0 0 40px rgba(74,158,92,0.2),0 0 80px rgba(74,158,92,0.08);margin-bottom:28px;background:#0f1e0e;display:flex;align-items:center;justify-content:center;font-size:64px;overflow:hidden;}
+.mascotas-foto img{width:100%;height:100%;object-fit:cover;display:block;}
+.mascotas-nombres{font-family:'Cinzel',serif;font-size:18px;letter-spacing:0.15em;color:#a0c880;margin-bottom:20px;text-align:center;}
+.mascotas-paws{color:rgba(74,158,92,0.5);letter-spacing:0.3em;margin-bottom:20px;font-size:18px;}
+.mascotas-mensaje{font-family:'EB Garamond',serif;font-style:italic;font-size:17px;line-height:1.9;color:#b0c8a0;text-align:center;max-width:400px;margin-bottom:32px;}
+.mascotas-cerrar{background:none;border:1px solid rgba(74,158,92,0.25);color:rgba(140,180,100,0.4);font-family:'Cinzel',serif;font-size:11px;letter-spacing:0.2em;padding:10px 28px;cursor:pointer;border-radius:2px;transition:all 0.3s;text-transform:uppercase;}
+.mascotas-cerrar:hover{border-color:rgba(74,158,92,0.5);color:#6abf78;}
+</style>
+</head>
+<body>
+
+<canvas id="particulas"></canvas>
+<canvas id="fireworks-canvas"></canvas>
+<canvas id="nieve-canvas"></canvas>
+<div id="flash-magico"></div>
+
+<!-- INTRO -->
+<div id="pantalla-hogwarts">
+  <svg class="sello-hp" viewBox="0 0 110 130" xmlns="http://www.w3.org/2000/svg">
+    <path d="M8 8 L102 8 L102 88 L55 122 L8 88 Z" fill="#0d1a0d" stroke="#2a6e3a" stroke-width="1.5"/>
+    <line x1="55" y1="8" x2="55" y2="100" stroke="#2a6e3a" stroke-width="1" opacity="0.6"/>
+    <line x1="8" y1="60" x2="102" y2="60" stroke="#2a6e3a" stroke-width="1" opacity="0.6"/>
+    <path d="M30 40 Q40 25 55 35 Q70 45 80 30 Q85 22 78 18 Q72 14 68 20 Q64 26 55 22 Q42 16 32 28 Q20 42 28 58 Q36 72 55 68 Q74 64 78 75 Q82 84 75 88 Q68 92 65 85" fill="none" stroke="#4a9e5c" stroke-width="2.5" stroke-linecap="round"/>
+    <text x="55" y="108" text-anchor="middle" font-family="Cinzel,serif" font-size="11" fill="#2a6e3a" letter-spacing="0.2em">SLYTHERIN</text>
+  </svg>
+  <div class="hogwarts-titulo">Colegio Hogwarts de Magia y Hechicería</div>
+  <div class="hogwarts-subtitulo">Has recibido una carta</div>
+  <div class="hogwarts-sub2">Entregada personalmente por la magia</div>
+  <div class="separador-hp"><div class="sep-linea"></div><span>✦</span><div class="sep-linea r"></div></div>
+  <!-- ✏️ EDITA: nombre de ella -->
+  <div class="carta-hp-destinatario">
+    Srta. <strong>[Nombre de ella]</strong><br>
+    Casa Slytherin, Hogwarts<br>
+    <span style="font-size:13px;opacity:0.6">El lugar exacto de su corazón</span>
+  </div>
+  <div class="alohomora-wrap">
+    <div class="alohomora-label">Pronuncia el hechizo para abrir</div>
+    <input class="alohomora-input" id="alohomora-input" type="text" placeholder="_ _ _ _ _ _ _ _ _ _" autocomplete="off" spellcheck="false" oninput="verificarHechizo(this)" onchange="verificarHechizo(this)" onkeyup="verificarHechizo(this)">
+    <div class="pista-wrap">
+      <div class="pista-label">pista</div>
+      <div class="pista-letras" id="pistaLetras"></div>
+    </div>
+    <div class="alohomora-error" id="alohomora-error">Eso no es un hechizo válido, muggle 🙄</div>
+    <button class="alohomora-btn" onclick="verificarHechizo(document.getElementById('alohomora-input'))">Abrir con magia ✦</button>
+  </div>
+</div>
+
+<!-- SOBRE -->
+<div id="escena">
+  <div class="sobre-titulo">Tu carta está esperando</div>
+  <div class="sobre-wrap" id="sobreWrap" onclick="abrirSobre()">
+    <div class="sobre">
+      <div class="sobre-cuerpo">
+        <div class="sobre-left"></div><div class="sobre-right"></div><div class="sobre-bottom"></div>
+        <div class="sello">🐍</div>
+      </div>
+      <div class="sobre-tapa"><div class="sobre-tapa-inner"></div><div class="sobre-tapa-back"></div></div>
+    </div>
+    <div class="carta-saliendo">
+      <div class="carta-preview">
+        <div class="carta-preview-lineas">
+          <div class="linea-preview"></div><div class="linea-preview"></div><div class="linea-preview"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <button id="btn-abrir" onclick="abrirSobre()">Abrir carta</button>
+</div>
+
+<!-- CARTA -->
+<div id="carta-completa">
+  <div class="papel">
+    <div class="papel-header">
+      <div class="header-top">
+        <div class="header-serpiente">🐍</div>
+        <div>
+          <!-- ✏️ EDITA: título y destinatario -->
+          <div class="papel-titulo">Una carta para ti</div>
+          <div class="papel-destinatario">Para: [Nombre de ella]</div>
+        </div>
+      </div>
+      <div class="casa-badge">✦ Casa Slytherin · Hogwarts</div>
+    </div>
+    <div class="sesiones-puntos" id="puntos"></div>
+    <div class="sesiones-inner" id="sesionesInner"></div>
+    <div class="carta-nav">
+      <button class="btn-carta" id="btnPrev" onclick="cambiar(-1)">← Anterior</button>
+      <span class="prog-text" id="progTexto"></span>
+      <button class="btn-carta" id="btnNext" onclick="cambiar(1)">Siguiente →</button>
+    </div>
+    <div class="firma-bloque">
+      <div>
+        <div class="firma-sub">Con cariño</div>
+        <div class="firma-texto" id="firmaTexto"><span id="firmaCursor" class="cursor-firma"></span></div>
+      </div>
+    </div>
+    <!-- Botón WhatsApp -->
+    <div class="ws-seccion" id="ws-seccion">
+      <div class="ws-confirma">Confirma que leíste tu carta 💬</div>
+      <button id="btn-responder" onclick="responder()">
+        <span style="font-size:18px">💬</span> Enviar respuesta mágica
+      </button>
+    </div>
+  </div>
+  <button id="btn-cerrar" onclick="cerrarCarta()">✕ Cerrar carta</button>
+</div>
+
+<!-- COUNTDOWN -->
+<div id="countdown-banner">
+  <div class="countdown-label">Expelliarmus activado — carta destruida en</div>
+  <div id="countdown-num">10</div>
+  <div class="countdown-sub">...o eso crees</div>
+</div>
+
+<!-- MODAL TROLL -->
+<div id="modal-troll">
+  <div class="modal-caja">
+    <div class="modal-emoji">🐍</div>
+    <div class="modal-titulo">Jk. Wingardium Leviosa</div>
+    <!-- ✏️ EDITA: mensaje troll -->
+    <div class="modal-texto">Ningún hechizo puede destruir esto. Esta carta está protegida por magia antigua. Es tuya para siempre, lo quieras o no. Incluso Dumbledore lo sabe.</div>
+    <button class="modal-btn" onclick="cerrarModalMostrarHint()">Acepto mi destino</button>
+  </div>
+</div>
+
+<!-- SACUDIR -->
+<div id="sacudir-hint">
+  <div class="sacudir-caja">
+    <div class="sacudir-icono">📱</div>
+    <div class="sacudir-texto">Sacude tu celular</div>
+    <div class="sacudir-sub">hay algo especial esperándote...</div>
+  </div>
+</div>
+
+<!-- MASCOTAS -->
+<div id="pantalla-mascotas">
+  <div class="mascotas-estrellas"></div>
+  <!-- ✏️ FOTO: reemplaza mascotas.jpg con tu imagen -->
+  <div class="mascotas-foto">
+    <img src="mascotas.jpg" alt="Teddy, Darty y Max" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+    <span style="display:none">🐾</span>
+  </div>
+  <div class="mascotas-nombres">Teddy · Darty · Max</div>
+  <div class="mascotas-paws">🐾 🐾 🐾</div>
+  <!-- ✏️ EDITA: mensaje mascotas -->
+  <div class="mascotas-mensaje">
+    Teddy y Darty dejaron huellas que nunca se borran.<br>
+    Ahora tienes 18 años, un camino enorme por delante<br>
+    — y a Max, que aunque no los conoció,<br>
+    te cuida igual que ellos lo harían.<br><br>
+    No estás sola. 🐾
+  </div>
+  <button class="mascotas-cerrar" onclick="cerrarMascotas()">🐾 Guardar en el corazón</button>
+</div>
+
+<script>
+// =============================================
+// ✏️  EDITA AQUÍ
+// =============================================
+const tuNumeroWhatsapp = "56912345678";
+const mensajeRespuesta = "Acabo de leer tu carta... 🐍✨ ¡la leí toda!";
+const nombreFirma      = "[Tu nombre]";
+
+// =============================================
+// ✏️  TINTA INVISIBLE — texto secreto por sesión
+//     Pon null si no quieres mensaje en esa sesión
+// =============================================
+const tintaOculta = [
+  null,
+  "Oye, sí... te quiero mucho. 🐍",
+  null,
+  "Feliz cumple, bruja favorita. ✨"
+];
+
+// =============================================
+// ✏️  SESIONES
+// =============================================
+const sesiones = [
+  {
+    num: "Primera sesión",
+    titulo: "El saludo",
+    texto:
+`Hola, [nombre]...
+
+Escribe aquí tu saludo de apertura.
+Cuéntale cómo te sientes al escribirle
+y por qué decidiste hacerlo.`
+  },
+  {
+    num: "Segunda sesión",
+    titulo: "Lo que quiero que sepas",
+    texto:
+`Escribe aquí el mensaje principal de tu carta.
+
+Lo que más quieres que esta persona sepa.
+Algo que nunca le has dicho, algo que admiras,
+o cómo ha influido en tu vida.`
+  },
+  {
+    num: "Tercera sesión",
+    titulo: "Un recuerdo que guardo",
+    texto:
+`Comparte un momento o anécdota específica.
+
+Los detalles concretos hacen las cartas
+mucho más memorables y especiales.
+
+"Recuerdo cuando..."`
+  },
+  {
+    num: "Cuarta sesión",
+    titulo: "Lo que te deseo",
+    texto:
+`Escribe tus deseos para esta persona.
+
+¿Qué le deseas para su futuro?
+¿Qué quieres que sepa que siempre
+tendrá de tu parte?`
+  }
+];
+
+// ============================================
+// LÓGICA
+// ============================================
+let sesionActual=0, firmaAnimada=false, countdownTimer=null;
+let sacudirActivo=false, sacudirEjecutado=false;
+
+// --- PISTA ALOHOMORA letra por letra ---
+const clave = "alohomora";
+let pistaIndex = 0, pistaTimer = null;
+function iniciarPista(){
+  const el = document.getElementById('pistaLetras');
+  el.textContent = '';
+  pistaIndex = 0;
+  // espera 3s, luego una letra cada 1.8s
+  pistaTimer = setTimeout(function tick(){
+    if(pistaIndex < clave.length){
+      el.textContent += clave[pistaIndex];
+      pistaIndex++;
+      pistaTimer = setTimeout(tick, 1800);
+    }
+  }, 3000);
+}
+window.addEventListener('load', iniciarPista);
+
+// --- PARTÍCULAS ---
+const canvas=document.getElementById('particulas'), ctx=canvas.getContext('2d'); let particulas=[];
+function resizeCanvas(){canvas.width=window.innerWidth;canvas.height=window.innerHeight;}
+resizeCanvas(); window.addEventListener('resize',resizeCanvas);
+function crearParticula(){return{x:Math.random()*canvas.width,y:canvas.height+10,vx:(Math.random()-0.5)*0.6,vy:-(Math.random()*1.2+0.4),size:Math.random()*3+1,alpha:Math.random()*0.6+0.2,color:Math.random()>0.5?'#4a9e5c':(Math.random()>0.5?'#c8e8a0':'#a0d880'),life:0,maxLife:Math.random()*200+100,wobble:Math.random()*Math.PI*2,wobbleSpeed:Math.random()*0.04+0.01};}
+for(let i=0;i<60;i++){const p=crearParticula();p.y=Math.random()*canvas.height;p.life=Math.random()*p.maxLife;particulas.push(p);}
+function animarParticulas(){ctx.clearRect(0,0,canvas.width,canvas.height);particulas.forEach((p,i)=>{p.life++;p.y+=p.vy;p.x+=p.vx+Math.sin(p.wobble)*0.3;p.wobble+=p.wobbleSpeed;const fi=Math.min(p.life/30,1),fo=Math.min((p.maxLife-p.life)/30,1),op=p.alpha*fi*fo;ctx.save();ctx.globalAlpha=op;ctx.fillStyle=p.color;ctx.shadowColor=p.color;ctx.shadowBlur=6;if(p.size>2.5){ctx.beginPath();for(let j=0;j<4;j++){const a=(j/4)*Math.PI*2+p.wobble,r=j%2===0?p.size:p.size*0.4;j===0?ctx.moveTo(p.x+Math.cos(a)*r,p.y+Math.sin(a)*r):ctx.lineTo(p.x+Math.cos(a)*r,p.y+Math.sin(a)*r);}ctx.closePath();ctx.fill();}else{ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,Math.PI*2);ctx.fill();}ctx.restore();if(p.life>=p.maxLife||p.y<-10)particulas[i]=crearParticula();});requestAnimationFrame(animarParticulas);}
+animarParticulas();
+
+// --- NIEVE ---
+const nCanvas=document.getElementById('nieve-canvas'), nCtx=nCanvas.getContext('2d'); let copos=[], nieveActiva=false;
+function resizeNieve(){nCanvas.width=window.innerWidth;nCanvas.height=window.innerHeight;}
+resizeNieve(); window.addEventListener('resize',resizeNieve);
+function crearCopo(){return{x:Math.random()*nCanvas.width,y:-10,vy:0.6+Math.random()*1.2,vx:(Math.random()-0.5)*0.4,size:Math.random()*3+1.5,alpha:Math.random()*0.18+0.06,wobble:Math.random()*Math.PI*2,ws:Math.random()*0.02+0.005};}
+function animarNieve(){if(!nieveActiva)return;if(Math.random()<0.3)copos.push(crearCopo());nCtx.clearRect(0,0,nCanvas.width,nCanvas.height);copos.forEach((c,i)=>{c.y+=c.vy;c.x+=c.vx+Math.sin(c.wobble)*0.3;c.wobble+=c.ws;nCtx.save();nCtx.globalAlpha=c.alpha;nCtx.fillStyle='#c8e8d8';nCtx.shadowColor='#a0e0c0';nCtx.shadowBlur=2;nCtx.beginPath();nCtx.arc(c.x,c.y,c.size,0,Math.PI*2);nCtx.fill();nCtx.restore();if(c.y>nCanvas.height+10)copos.splice(i,1);});requestAnimationFrame(animarNieve);}
+function iniciarNieve(){nCanvas.classList.add('activo');nieveActiva=true;animarNieve();}
+function detenerNieve(){nieveActiva=false;nCanvas.classList.remove('activo');nCtx.clearRect(0,0,nCanvas.width,nCanvas.height);copos=[];}
+
+// --- FUEGOS ---
+const fwCanvas=document.getElementById('fireworks-canvas'),fwCtx=fwCanvas.getContext('2d');let cohetes=[],fwActivo=false;
+function resizeFW(){fwCanvas.width=window.innerWidth;fwCanvas.height=window.innerHeight;}resizeFW();window.addEventListener('resize',resizeFW);
+const coloresFW=['#4a9e5c','#c8e8a0','#a0d880','#f0e060','#e0c060','#80e8b0','#ffffff','#6abf78'];
+function lanzarCohete(){cohetes.push({x:fwCanvas.width*(0.2+Math.random()*0.6),y:fwCanvas.height,targetY:fwCanvas.height*(0.1+Math.random()*0.35),vy:-14-Math.random()*6,color:coloresFW[Math.floor(Math.random()*coloresFW.length)],trail:[],exploded:false,particulas:[]});}
+function explotar(c){c.exploded=true;const n=60+Math.floor(Math.random()*40);for(let i=0;i<n;i++){const angle=(i/n)*Math.PI*2,speed=2+Math.random()*5;c.particulas.push({x:c.x,y:c.y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed-(Math.random()*2),alpha:1,size:Math.random()*3+1,color:Math.random()>0.3?c.color:coloresFW[Math.floor(Math.random()*coloresFW.length)]});}}
+function animarFW(){if(!fwActivo)return;fwCtx.fillStyle='rgba(0,0,0,0.18)';fwCtx.fillRect(0,0,fwCanvas.width,fwCanvas.height);cohetes.forEach((c,ci)=>{if(!c.exploded){c.trail.push({x:c.x,y:c.y});if(c.trail.length>12)c.trail.shift();c.y+=c.vy;c.vy*=0.98;c.trail.forEach((t,ti)=>{fwCtx.globalAlpha=ti/c.trail.length*0.6;fwCtx.fillStyle=c.color;fwCtx.beginPath();fwCtx.arc(t.x,t.y,2,0,Math.PI*2);fwCtx.fill();});fwCtx.globalAlpha=1;if(c.y<=c.targetY||c.vy>-1)explotar(c);}else{let vivos=false;c.particulas.forEach(p=>{if(p.alpha<=0)return;vivos=true;p.x+=p.vx;p.y+=p.vy;p.vy+=0.12;p.vx*=0.97;p.alpha-=0.018;fwCtx.globalAlpha=Math.max(0,p.alpha);fwCtx.fillStyle=p.color;fwCtx.shadowColor=p.color;fwCtx.shadowBlur=4;fwCtx.beginPath();fwCtx.arc(p.x,p.y,p.size,0,Math.PI*2);fwCtx.fill();fwCtx.shadowBlur=0;});if(!vivos)cohetes.splice(ci,1);}});fwCtx.globalAlpha=1;requestAnimationFrame(animarFW);}
+function iniciarFuegos(){fwCanvas.classList.add('activo');fwActivo=true;animarFW();let lanzados=0;function lanzar(){if(lanzados<18){lanzarCohete();if(Math.random()>0.5)lanzarCohete();lanzados++;setTimeout(lanzar,300+Math.random()*400);}else{setTimeout(()=>{fwActivo=false;fwCtx.clearRect(0,0,fwCanvas.width,fwCanvas.height);fwCanvas.classList.remove('activo');},3000);}}lanzar();}
+
+// --- ALOHOMORA ---
+function verificarHechizo(input){
+  const val=input.value.trim().toLowerCase(),errorEl=document.getElementById('alohomora-error');
+  input.classList.remove('error','correcto');errorEl.classList.remove('visible');
+  if(val==='alohomora'){
+    input.classList.add('correcto');
+    if(pistaTimer)clearTimeout(pistaTimer);
+    const flash=document.getElementById('flash-magico');flash.classList.add('activo');setTimeout(()=>flash.classList.remove('activo'),300);
+    setTimeout(()=>{const p=document.getElementById('pantalla-hogwarts');p.classList.add('saliendo');setTimeout(()=>{p.style.display='none';document.getElementById('escena').classList.add('visible');},800);},400);
+  }else if(val.length>=9&&val!=='alohomora'){
+    input.classList.add('error');errorEl.classList.add('visible');
+    setTimeout(()=>{input.classList.remove('error');input.value='';},600);
+  }
+}
+document.addEventListener('keydown',e=>{if(e.key==='Enter'){const input=document.getElementById('alohomora-input');if(input&&document.getElementById('pantalla-hogwarts').style.display!=='none')verificarHechizo(input);}});
+
+// --- RENDER ---
+function renderCarta(){
+  const inner=document.getElementById('sesionesInner'),puntos=document.getElementById('puntos');
+  inner.innerHTML='';puntos.innerHTML='';
+  sesiones.forEach((s,i)=>{
+    const tinta=tintaOculta[i];
+    const div=document.createElement('div');
+    div.className='sesion'+(i===sesionActual?' activa':'');
+    div.innerHTML=`<div class="sesion-num">${s.num}</div><div class="sesion-tit">${s.titulo}</div><div class="sesion-texto">${s.texto}</div>`
+      +(tinta?`<div class="tinta-wrap"><div class="tinta-hint">✦ mantén presionado para revelar ✦</div><div class="tinta-texto" id="tinta-${i}">${tinta}</div></div>`:'');
+    inner.appendChild(div);
+    // eventos tinta invisible
+    if(tinta){
+      const el=div.querySelector(`#tinta-${i}`);
+      let timer=null;
+      el.addEventListener('mousedown',()=>{timer=setTimeout(()=>el.classList.add('revelado'),600);});
+      el.addEventListener('mouseup',()=>clearTimeout(timer));
+      el.addEventListener('touchstart',()=>{timer=setTimeout(()=>el.classList.add('revelado'),600);},{passive:true});
+      el.addEventListener('touchend',()=>clearTimeout(timer));
+    }
+    const p=document.createElement('div');p.className='punto'+(i===sesionActual?' activo':'');
+    p.onclick=()=>{sesionActual=i;renderCarta();};puntos.appendChild(p);
+  });
+  document.getElementById('btnPrev').disabled=sesionActual===0;
+  document.getElementById('btnNext').disabled=sesionActual===sesiones.length-1;
+  document.getElementById('progTexto').textContent=`${sesionActual+1} de ${sesiones.length}`;
+  if(sesionActual===sesiones.length-1){
+    if(!firmaAnimada){iniciarFuegos();animarFirma();firmaAnimada=true;}
+    if(!countdownTimer)iniciarCountdown();
+    document.getElementById('ws-seccion').style.display='flex';
+  }
+}
+
+// --- FIRMA ---
+function animarFirma(){
+  const el=document.getElementById('firmaTexto'),cursor=document.getElementById('firmaCursor');let i=0;
+  setTimeout(()=>{const iv=setInterval(()=>{if(i<nombreFirma.length){el.insertBefore(document.createTextNode(nombreFirma[i]),cursor);i++;}else{clearInterval(iv);setTimeout(()=>{cursor.style.display='none';},1800);}},90);},800);
+}
+
+// --- COUNTDOWN ---
+function iniciarCountdown(){
+  const banner=document.getElementById('countdown-banner'),numEl=document.getElementById('countdown-num');
+  banner.classList.add('visible');let n=10;numEl.textContent=n;
+  countdownTimer=setInterval(()=>{n--;numEl.textContent=n;if(n<=3)numEl.style.color='#9e4a2a';if(n<=0){clearInterval(countdownTimer);banner.classList.remove('visible');setTimeout(()=>document.getElementById('modal-troll').classList.add('visible'),400);}},1000);
+}
+
+function cerrarModalMostrarHint(){
+  document.getElementById('modal-troll').classList.remove('visible');
+  sacudirActivo=true;sacudirEjecutado=false;
+  document.getElementById('sacudir-hint').classList.add('visible');
+  document.getElementById('sacudir-hint').addEventListener('click',activarMascotas,{once:true});
+}
+
+// --- SHAKE ---
+let ultimaAcel={x:0,y:0,z:0};
+window.addEventListener('devicemotion',e=>{
+  if(!sacudirActivo||sacudirEjecutado)return;
+  const a=e.accelerationIncludingGravity;if(!a)return;
+  const delta=Math.abs(a.x-ultimaAcel.x)+Math.abs(a.y-ultimaAcel.y)+Math.abs(a.z-ultimaAcel.z);
+  ultimaAcel={x:a.x||0,y:a.y||0,z:a.z||0};
+  if(delta>25)activarMascotas();
+});
+function activarMascotas(){if(sacudirEjecutado)return;sacudirEjecutado=true;sacudirActivo=false;document.getElementById('sacudir-hint').classList.remove('visible');document.getElementById('pantalla-mascotas').classList.add('visible');}
+function cerrarMascotas(){document.getElementById('pantalla-mascotas').classList.remove('visible');}
+function cerrarModal(){document.getElementById('modal-troll').classList.remove('visible');}
+function responder(){window.open(`https://wa.me/${tuNumeroWhatsapp}?text=${encodeURIComponent(mensajeRespuesta)}`,'_blank');}
+function cambiar(dir){sesionActual=Math.max(0,Math.min(sesiones.length-1,sesionActual+dir));renderCarta();}
+
+function abrirSobre(){
+  const wrap=document.getElementById('sobreWrap');
+  if(wrap.classList.contains('abierta')){setTimeout(()=>{document.getElementById('carta-completa').classList.add('visible');resetCarta();},500);return;}
+  wrap.classList.add('abierta');
+  setTimeout(()=>{document.getElementById('carta-completa').classList.add('visible');resetCarta();iniciarNieve();},1200);
+}
+
+function resetCarta(){
+  sesionActual=0;firmaAnimada=false;countdownTimer=null;sacudirActivo=false;sacudirEjecutado=false;
+  document.getElementById('firmaTexto').innerHTML='<span id="firmaCursor" class="cursor-firma"></span>';
+  document.getElementById('ws-seccion').style.display='none';
+  renderCarta();
+}
+
+function cerrarCarta(){
+  document.getElementById('carta-completa').classList.remove('visible');
+  document.getElementById('sobreWrap').classList.remove('abierta');
+  document.getElementById('countdown-banner').classList.remove('visible');
+  document.getElementById('modal-troll').classList.remove('visible');
+  document.getElementById('sacudir-hint').classList.remove('visible');
+  document.getElementById('pantalla-mascotas').classList.remove('visible');
+  if(countdownTimer)clearInterval(countdownTimer);
+  countdownTimer=null;firmaAnimada=false;sacudirActivo=false;
+  detenerNieve();
+}
+</script>
+</body>
+</html>
