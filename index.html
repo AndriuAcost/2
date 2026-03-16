@@ -73,7 +73,7 @@ body{font-family:'EB Garamond',serif;background:#0a0f0a;min-height:100vh;display
 .sobre-left{position:absolute;bottom:0;left:0;border-style:solid;border-width:110px 0 0 160px;border-color:transparent transparent transparent #162416;}
 .sobre-right{position:absolute;bottom:0;right:0;border-style:solid;border-width:110px 160px 0 0;border-color:transparent #1e301e transparent transparent;}
 .sobre-bottom{position:absolute;bottom:0;left:0;right:0;border-style:solid;border-width:0 160px 90px 160px;border-color:transparent transparent #1a281a transparent;}
-.sello{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);width:50px;height:50px;background:radial-gradient(circle,#1e3a1e,#0d1a0d);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:0 0 20px rgba(74,158,92,0.4);z-index:5;border:1.5px solid rgba(74,158,92,0.4);}
+.sello{position:absolute;top:16px;bottom:auto;left:50%;transform:translateX(-50%);width:50px;height:50px;background:radial-gradient(circle,#1e3a1e,#0d1a0d);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:0 0 20px rgba(74,158,92,0.4);z-index:5;border:1.5px solid rgba(74,158,92,0.4);}
 .sobre-tapa{position:absolute;top:0;left:0;right:0;height:120px;transform-origin:top center;transform-style:preserve-3d;transition:transform 0.8s cubic-bezier(.4,0,.2,1);z-index:10;}
 .sobre-tapa-inner{width:100%;height:100%;clip-path:polygon(0 0,100% 0,50% 100%);background:linear-gradient(180deg,#1e301e 0%,#162416 100%);}
 .sobre-tapa-back{position:absolute;inset:0;clip-path:polygon(0 0,100% 0,50% 100%);background:linear-gradient(180deg,#1a281a 0%,#122012 100%);transform:rotateX(180deg);backface-visibility:hidden;}
@@ -164,7 +164,7 @@ body{font-family:'EB Garamond',serif;background:#0a0f0a;min-height:100vh;display
 #btn-cerrar:hover{border-color:rgba(74,158,92,0.5);color:#6abf78;}
 
 /* ===================== COUNTDOWN ===================== */
-#countdown-banner{display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:rgba(6,12,6,0.95);border:1px solid rgba(74,158,92,0.3);border-radius:3px;padding:14px 28px;z-index:9999;text-align:center;backdrop-filter:blur(8px);min-width:300px;}
+#countdown-banner{display:none;position:fixed;top:16px;bottom:auto;left:50%;transform:translateX(-50%);background:rgba(6,12,6,0.95);border:1px solid rgba(74,158,92,0.3);border-radius:3px;padding:14px 28px;z-index:9999;text-align:center;backdrop-filter:blur(8px);min-width:300px;}
 #countdown-banner.visible{display:block;animation:aparecer 0.4s ease;}
 @keyframes aparecer{from{opacity:0;transform:translateX(-50%) translateY(12px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
 .countdown-label{font-family:'Cinzel',serif;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:rgba(140,180,100,0.5);margin-bottom:4px;}
@@ -323,7 +323,7 @@ html, body {
   margin-bottom: 20px !important;
 }
 .separador-hp {
-  margin-bottom: 16px !important;
+  margin-bottom: auto !important; top: 16px !important;
 }
 .sep-linea { width: 50px !important; }
 .carta-hp-destinatario {
@@ -376,7 +376,7 @@ html, body {
   width: 85vw !important;
   min-width: unset !important;
   padding: 12px 16px !important;
-  bottom: 16px !important;
+  bottom: auto !important; top: 16px !important;
 }
 #countdown-num { font-size: 28px !important; }
 
@@ -692,8 +692,8 @@ function renderCarta(){
   document.getElementById('progTexto').textContent=`${sesionActual+1} de ${sesiones.length}`;
   if(sesionActual===sesiones.length-1){
     if(!firmaAnimada){iniciarFuegos();animarFirma();firmaAnimada=true;}
-    if(!countdownTimer)iniciarCountdown();
-    document.getElementById('ws-seccion').style.display='flex';
+    if(!countdownTimer)setTimeout(()=>iniciarCountdown(), 4000);
+    // ws-seccion se muestra solo tras cerrar mascotas
   }
 }
 
@@ -706,7 +706,7 @@ function animarFirma(){
 // --- COUNTDOWN ---
 function iniciarCountdown(){
   const banner=document.getElementById('countdown-banner'),numEl=document.getElementById('countdown-num');
-  banner.classList.add('visible');let n=10;numEl.textContent=n;
+  banner.classList.add('visible');let n=5;numEl.textContent=n;
   countdownTimer=setInterval(()=>{n--;numEl.textContent=n;if(n<=3)numEl.style.color='#9e4a2a';if(n<=0){clearInterval(countdownTimer);banner.classList.remove('visible');setTimeout(()=>document.getElementById('modal-troll').classList.add('visible'),400);}},1000);
 }
 
@@ -727,7 +727,17 @@ window.addEventListener('devicemotion',e=>{
   if(delta>25)activarMascotas();
 });
 function activarMascotas(){if(sacudirEjecutado)return;sacudirEjecutado=true;sacudirActivo=false;document.getElementById('sacudir-hint').classList.remove('visible');document.getElementById('pantalla-mascotas').classList.add('visible');}
-function cerrarMascotas(){document.getElementById('pantalla-mascotas').classList.remove('visible');}
+function cerrarMascotas(){
+  document.getElementById('pantalla-mascotas').classList.remove('visible');
+  // Mostrar botón WhatsApp después de cerrar mascotas
+  const ws = document.getElementById('ws-seccion');
+  if(ws) {
+    ws.style.display = 'flex';
+    ws.style.animation = 'fadeSlide 0.5s ease';
+    // scroll suave hasta el botón
+    setTimeout(() => ws.scrollIntoView({behavior:'smooth', block:'center'}), 200);
+  }
+}
 function cerrarModal(){document.getElementById('modal-troll').classList.remove('visible');}
 function responder(){window.open(`https://wa.me/${tuNumeroWhatsapp}?text=${encodeURIComponent(mensajeRespuesta)}`,'_blank');}
 function cambiar(dir){sesionActual=Math.max(0,Math.min(sesiones.length-1,sesionActual+dir));renderCarta();}
@@ -742,7 +752,7 @@ function abrirSobre(){
 function resetCarta(){
   sesionActual=0;firmaAnimada=false;countdownTimer=null;sacudirActivo=false;sacudirEjecutado=false;
   document.getElementById('firmaTexto').innerHTML='<span id="firmaCursor" class="cursor-firma"></span>';
-  document.getElementById('ws-seccion').style.display='none';
+  document.getElementById('ws-seccion').style.display='none'; document.getElementById('ws-seccion') && (document.getElementById('ws-seccion').style.display='none');
   renderCarta();
 }
 
