@@ -203,6 +203,186 @@ body{font-family:'EB Garamond',serif;background:#0a0f0a;min-height:100vh;display
 .mascotas-mensaje{font-family:'EB Garamond',serif;font-style:italic;font-size:17px;line-height:1.9;color:#b0c8a0;text-align:center;max-width:400px;margin-bottom:32px;}
 .mascotas-cerrar{background:none;border:1px solid rgba(74,158,92,0.25);color:rgba(140,180,100,0.4);font-family:'Cinzel',serif;font-size:11px;letter-spacing:0.2em;padding:10px 28px;cursor:pointer;border-radius:2px;transition:all 0.3s;text-transform:uppercase;}
 .mascotas-cerrar:hover{border-color:rgba(74,158,92,0.5);color:#6abf78;}
+
+/* ===================== MOBILE FIXES ===================== */
+html, body {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+/* Carta completa scroll fix */
+#carta-completa {
+  padding: 16px 8px 40px !important;
+  justify-content: flex-start !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Papel ancho completo en mobile */
+.papel {
+  max-width: 100% !important;
+  width: 100% !important;
+  margin: 0 !important;
+}
+
+/* Header más compacto */
+.papel-header {
+  padding: 20px 20px 16px !important;
+}
+.papel-titulo {
+  font-size: 18px !important;
+}
+.papel-destinatario {
+  font-size: 10px !important;
+}
+.header-serpiente {
+  font-size: 22px !important;
+}
+.casa-badge {
+  font-size: 9px !important;
+  padding: 3px 8px !important;
+}
+
+/* Sesiones inner padding mobile */
+.sesiones-inner {
+  padding: 20px 20px 24px !important;
+  min-height: auto !important;
+}
+.sesion-tit {
+  font-size: 17px !important;
+}
+.sesion-texto {
+  font-size: 15px !important;
+  line-height: 1.9 !important;
+}
+
+/* Nav botones visibles en mobile */
+.carta-nav {
+  padding: 12px 16px 16px !important;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+.btn-carta {
+  font-size: 11px !important;
+  padding: 10px 14px !important;
+  letter-spacing: 0.05em !important;
+  min-width: 90px;
+}
+.prog-text {
+  font-size: 10px !important;
+  white-space: nowrap;
+}
+
+/* Firma */
+.firma-bloque {
+  padding: 16px 20px 24px !important;
+}
+.firma-texto {
+  font-size: 18px !important;
+}
+
+/* WS seccion */
+.ws-seccion {
+  padding: 16px 20px 24px !important;
+}
+#btn-responder {
+  font-size: 12px !important;
+  padding: 12px 16px !important;
+  letter-spacing: 0.08em !important;
+}
+
+/* Puntos navegación */
+.sesiones-puntos {
+  padding: 16px 20px 0 !important;
+}
+
+/* Botón cerrar */
+#btn-cerrar {
+  margin-top: 16px !important;
+  font-size: 11px !important;
+  padding: 10px 24px !important;
+  width: 100%;
+  max-width: 300px;
+}
+
+/* Intro pantalla hogwarts mobile */
+#pantalla-hogwarts {
+  padding: 24px 20px !important;
+  justify-content: center !important;
+  gap: 0;
+}
+.hogwarts-titulo {
+  font-size: 11px !important;
+  margin-bottom: 4px !important;
+}
+.hogwarts-subtitulo {
+  font-size: 18px !important;
+}
+.hogwarts-sub2 {
+  font-size: 13px !important;
+  margin-bottom: 20px !important;
+}
+.separador-hp {
+  margin-bottom: 16px !important;
+}
+.sep-linea { width: 50px !important; }
+.carta-hp-destinatario {
+  font-size: 14px !important;
+  margin-bottom: 20px !important;
+  line-height: 1.8 !important;
+}
+.alohomora-wrap {
+  max-width: 100% !important;
+  width: 100% !important;
+}
+.alohomora-input {
+  font-size: 14px !important;
+  padding: 12px 16px !important;
+}
+.pista-letras {
+  font-size: 13px !important;
+}
+
+/* Sobre en mobile */
+#escena {
+  gap: 20px !important;
+  padding: 0 16px;
+}
+.sobre-wrap {
+  width: 280px !important;
+  height: 190px !important;
+}
+.sobre-left { border-width: 95px 0 0 140px !important; }
+.sobre-right { border-width: 95px 140px 0 0 !important; }
+.sobre-bottom { border-width: 0 140px 78px 140px !important; }
+
+/* Sacudir hint */
+.sacudir-caja { padding: 32px 20px !important; }
+.sacudir-texto { font-size: 12px !important; }
+
+/* Mascotas mobile */
+#pantalla-mascotas { padding: 24px 20px !important; }
+.mascotas-foto { width: 160px !important; height: 160px !important; margin-bottom: 20px !important; }
+.mascotas-nombres { font-size: 15px !important; }
+.mascotas-mensaje { font-size: 15px !important; line-height: 1.8 !important; }
+
+/* Modal mobile */
+.modal-caja { padding: 28px 24px !important; max-width: 95vw !important; }
+.modal-titulo { font-size: 16px !important; }
+.modal-texto { font-size: 14px !important; }
+
+/* Countdown mobile */
+#countdown-banner {
+  width: 85vw !important;
+  min-width: unset !important;
+  padding: 12px 16px !important;
+  bottom: 16px !important;
+}
+#countdown-num { font-size: 28px !important; }
+
+/* Tinta invisible mobile */
+.tinta-texto { font-size: 14px !important; padding: 12px 14px !important; }
+
 </style>
 </head>
 <body>
